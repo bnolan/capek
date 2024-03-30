@@ -6,6 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libp2p = { version = "0.44", features = ["tcp-tokio", "dns-tokio", "mplex", "noise"] }
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.36", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3.30"
+libp2p = { version = "0.53.2", features = [ "tokio", "gossipsub", "mdns", "noise", "macros", "tcp", "yamux", "quic"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+llama_cpp_rs = "0.3.0"
 
+# pin cc to fix compile bug - https://github.com/mdrokz/rust-llama.cpp/issues/40#issuecomment-2015202313
+cc = "=1.0.83"
