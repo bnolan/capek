@@ -20,6 +20,10 @@
 
 use futures::stream::StreamExt;
 use libp2p::{gossipsub, mdns, noise, swarm::NetworkBehaviour, swarm::SwarmEvent, tcp, yamux};
+use llama_cpp_rs::{
+    options::{ModelOptions, PredictOptions},
+    LLama,
+};
 use std::collections::hash_map::DefaultHasher;
 use std::error::Error;
 use std::hash::{Hash, Hasher};
@@ -39,6 +43,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let _ = tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .try_init();
+
+    let model_options = ModelOptions::default();
+
+    let llama = LLama::new(
+        "models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf".into(),
+        &model_options,
+    )
+    .unwrap();
 
     let mut swarm = libp2p::SwarmBuilder::with_new_identity()
         .with_tokio()
@@ -118,10 +130,53 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     propagation_source: peer_id,
                     message_id: id,
                     message,
-                })) => println!(
+                })) => {
+                  println!(
                         "Got message: '{}' with id: {id} from peer: {peer_id}",
                         String::from_utf8_lossy(&message.data),
-                    ),
+                    );
+
+                    // ./main -ngl 32 -m tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf --color -c 2048 --temp 0.7 --repeat_penalty 1.1 -n -1 -p "<|im_start|>system\n{system_message}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant"
+
+                    let query = String::from_utf8_lossy(&message.data).to_string();
+                    let predict_options = PredictOptions {
+                      tokens: 0,
+                      threads: 14,
+                      temperature: 0.7,
+                      penalty: 1.1,
+                      top_k: 90,
+                      top_p: 0.86,
+                      token_callback: Some(
+                        Box::new(|token| {
+                            println!("token1: {}", token);
+
+                            true
+                        })
+                      ),
+                      ..Default::default()
+                    };
+
+
+                    let prompt= format!(r#"
+                    <|im_start|>system: 
+                      A chat between a user and an artificial intelligent assistant. The assistant is dumb. The assistant answers in 69 words or less.
+                    <|im_end|>
+                    
+                    <|im_start|>user\n
+                      {}
+                    <|im_end|>
+                    
+                    <|im_start|>assistant"#, query);
+
+                    let p = llama
+                      .predict(
+                          prompt.into(),
+                          predict_options,
+                      )
+                      .unwrap();
+
+                    println!("Got response: '{}'", p);
+                  }
                 SwarmEvent::NewListenAddr { address, .. } => {
                     println!("Local node is listening on {address}");
                 }
