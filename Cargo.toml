@@ -12,7 +12,8 @@ futures = "0.3.30"
 libp2p = { version = "0.53.2", features = [ "tokio", "gossipsub", "mdns", "noise", "macros", "tcp", "yamux", "quic"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-llama_cpp_rs = "0.3.0"
+llama-cpp-2 = { version = "0.1.45" }
+anyhow = "1.0.81"
 
 # pin cc to fix compile bug - https://github.com/mdrokz/rust-llama.cpp/issues/40#issuecomment-2015202313
-cc = "=1.0.83"
+# cc = "=1.0.83"
